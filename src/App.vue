@@ -1,47 +1,151 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { ref, onMounted } from "vue";
+import Card from "./components/Card.vue";
+import Spinner from "./components/icons/Spinner.vue";
+
+const animeData = ref([]);
+const isLoading = ref(false);
+const searchQuery = ref("");
+const apiEndpoint = "https://api.jikan.moe/v4/anime";
+
+const fetchData = async (url) => {
+    try {
+        isLoading.value = true;
+        const options = {
+            method: "GET",
+            headers: {
+                "Content-Type": "application/json",
+                Accept: "application/json",
+            },
+        };
+
+        const response = await fetch(url, options);
+        const data = await response.json();
+        return data.data;
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        return [];
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+const getAllAnime = async () => {
+    animeData.value = await fetchData(apiEndpoint);
+};
+
+const searchAnime = async (query) => {
+    const searchUrl = `${apiEndpoint}?q=${query}`;
+    animeData.value = await fetchData(searchUrl);
+};
+
+onMounted(() => {
+    getAllAnime();
+});
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+    <div class="container">
+        <header>
+            <h1><strong>Anime</strong> Search</h1>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
+            <form @submit.prevent="searchAnime(searchQuery)">
+                <input
+                    type="text"
+                    class="form-field"
+                    placeholder="Search your anime..."
+                    v-model="searchQuery"
+                    autocomplete=""
+                />
+            </form>
+        </header>
+        <main>
+            <Spinner v-if="isLoading" />
+            <section
+                class="anime-list"
+                v-else-if="animeData && animeData.length > 0 && !isLoading"
+            >
+                <Card
+                    v-for="anime in animeData"
+                    :key="anime.id"
+                    :src="anime.images.webp.image_url"
+                    :alt="anime.title"
+                />
+            </section>
+            <section class="no-data" v-else>
+                <h1>No data Avalaible</h1>
+            </section>
+        </main>
     </div>
-  </header>
-
-  <main>
-    <TheWelcome />
-  </main>
 </template>
 
 <style scoped>
+body * {
+    font-family: sans-serif;
+}
 header {
-  line-height: 1.5;
-}
-
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
-}
-
-@media (min-width: 1024px) {
-  header {
+    width: 100%;
+    position: sticky;
+    left: 0;
+    top: 0;
+    background-color: white;
+    padding: 1rem;
     display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 1;
+}
+
+header h1 {
+    color: rgba(0, 0, 0, 0.5);
+    font-weight: 700;
+}
+
+header strong {
+    color: rgba(0, 0, 0, 1);
+}
+
+form {
+    width: 100%;
+    display: grid;
     place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+}
+.form-field {
+    appearance: none;
+    background: none;
+    border: none;
+    outline: none;
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+    width: 50%;
+    box-shadow: 0 0 0 1px #252525;
+    padding: 0.75rem;
+    font-size: 20px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
 
-  header .wrapper {
+.form-field:focus {
+    background-color: #333;
+    color: white;
+}
+
+.container {
+    width: 90%;
+    margin: 0 auto;
+}
+
+.anime-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 4rem;
+    margin-top: 2.5rem;
+}
+
+.no-data {
     display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+    align-items: center;
+    justify-content: center;
+    height: 250px;
 }
 </style>
