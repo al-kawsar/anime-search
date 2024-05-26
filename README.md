@@ -1,29 +1,29 @@
-# vue-anime-search
+# Anime Search
 
-This template should help get you started developing with Vue 3 in Vite.
+belajar vue fetch api
 
-## Recommended IDE Setup
+## Setup & Configuration
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+1. Clone Repository URL
 
-## Customize configuration
+```bash
+git clone https://github.com/al-kawsar/anime-search.git
+```
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
+2. CD
 
-## Project Setup
+```bash
+cd anime-search
+```
 
-```sh
+3. Install Dependencies
+
+```bash
 npm install
 ```
 
-### Compile and Hot-Reload for Development
+4. Run Server Development
 
-```sh
+```bash
 npm run dev
-```
-
-### Compile and Minify for Production
-
-```sh
-npm run build
 ```
