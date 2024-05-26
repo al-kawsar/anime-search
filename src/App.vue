@@ -1,12 +1,14 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, watch, onMounted } from "vue";
 import Card from "./components/Card.vue";
 import Spinner from "./components/icons/Spinner.vue";
 
 const animeData = ref([]);
 const isLoading = ref(false);
 const searchQuery = ref("");
+const oldSearchQuery = ref("");
 const apiEndpoint = "https://api.jikan.moe/v4/anime";
+let searchTimer = null;
 
 const fetchData = async (url) => {
     try {
@@ -15,7 +17,7 @@ const fetchData = async (url) => {
             method: "GET",
             headers: {
                 "Content-Type": "application/json",
-                Accept: "application/json",
+                "Accept": "application/json",
             },
         };
 
@@ -30,14 +32,35 @@ const fetchData = async (url) => {
     }
 };
 
-const getAllAnime = async () => {
-    animeData.value = await fetchData(apiEndpoint);
-};
-
 const searchAnime = async (query) => {
     const searchUrl = `${apiEndpoint}?q=${query}`;
     animeData.value = await fetchData(searchUrl);
 };
+
+const getAllAnime = async () => {
+    animeData.value = await fetchData(apiEndpoint);
+};
+
+const handleSearch = () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(async () => {
+        if (searchQuery.value.length === 0) {
+            isLoading.value = true;
+            await getAllAnime();
+            console.log("length", searchQuery.value);
+        }
+        if (searchQuery.value.trim() !== "" && searchQuery.value !== oldSearchQuery.value) {
+            isLoading.value = true;
+            console.log("trim", searchQuery.value);
+            await searchAnime(searchQuery.value);
+        }
+        isLoading.value = false;
+    }, 150);
+};
+
+watch(searchQuery, (newValue, oldValue) => {
+    oldSearchQuery.value = oldValue;
+});
 
 onMounted(() => {
     getAllAnime();
@@ -49,28 +72,15 @@ onMounted(() => {
         <header>
             <h1><strong>Anime</strong> Search</h1>
 
-            <form @submit.prevent="searchAnime(searchQuery)">
-                <input
-                    type="text"
-                    class="form-field"
-                    placeholder="Search your anime..."
-                    v-model="searchQuery"
-                    autocomplete=""
-                />
+            <form @submit.prevent :disabled="isLoading">
+                <input type="text" class="form-field" placeholder="Search your anime..." v-model="searchQuery"
+                    autocomplete="" @input="handleSearch" />
             </form>
         </header>
         <main>
             <Spinner v-if="isLoading" />
-            <section
-                class="anime-list"
-                v-else-if="animeData && animeData.length > 0 && !isLoading"
-            >
-                <Card
-                    v-for="anime in animeData"
-                    :key="anime.id"
-                    :src="anime.images.webp.image_url"
-                    :alt="anime.title"
-                />
+            <section class="anime-list" v-else-if="animeData.length > 0 && !isLoading">
+                <Card v-for="anime in animeData" :key="anime.id" :src="anime.images.webp.image_url" :title="anime.title" />
             </section>
             <section class="no-data" v-else>
                 <h1>No data Avalaible</h1>
@@ -83,6 +93,7 @@ onMounted(() => {
 body * {
     font-family: sans-serif;
 }
+
 header {
     width: 100%;
     position: sticky;
@@ -111,6 +122,7 @@ form {
     display: grid;
     place-items: center;
 }
+
 .form-field {
     appearance: none;
     background: none;
